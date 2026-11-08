@@ -94,16 +94,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // Directorio de especialistas del consultorio médico
     const doctoresPorEspecialidad = {
         "medicina-general": [
-            "Dr. Carlos Rojas (Turno Mañana)",
-            "Dra. Andrea Morales (Turno Tarde)"
+            "Dr. Rodolfo Arturo Vargas Yuja (Turno Mañana y Tarde)"
         ],
         "laboratorio": [
-            "Lic. Mariana Soliz (Bioquímica)",
             "Lic. Roberto Vargas (Analista Clínico)"
         ],
         "ecografia": [
-            "Dra. Patricia Suárez (Imagenología)",
-            "Dr. Fernando Méndez (Ecografista)"
+            "Dr. Rodolfo Arturo Vargas Yuja (Imagenología y Ecografía)"
         ],
         "pediatria": [
             "Dra. Elena Ramos (Pediatra)",
@@ -293,7 +290,7 @@ Deseo confirmar el siguiente turno médico registrado:
 - Teléfono de contacto: ${ultimaCita.telefono}
 - Motivo: ${ultimaCita.motivo}`;
 
-            const numeroWhatsApp = "59170000000";
+            const numeroWhatsApp = "59157641628";
             const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
 
             window.open(url, "_blank");
