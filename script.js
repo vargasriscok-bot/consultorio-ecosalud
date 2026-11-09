@@ -102,9 +102,8 @@ document.addEventListener("DOMContentLoaded", () => {
         "ecografia": [
             "Dr. Rodolfo Arturo Vargas Yuja (Imagenología y Ecografía)"
         ],
-        "pediatria": [
-            "Dra. Elena Ramos (Pediatra)",
-            "Dr. Mario Gutiérrez (Cuidado Infantil)"
+        "enfermeria": [
+            "Lic. en Enfermería (Turno Mañana y Tarde)"
         ],
         "odontologia": [
             "Dr. Javier Ortiz (Odontología General)",
