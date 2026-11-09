@@ -94,10 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Directorio de especialistas del consultorio médico
     const doctoresPorEspecialidad = {
         "medicina-general": [
-            "Dr. Rodolfo Arturo Vargas Yuja (Turno Mañana y Tarde)"
-        ],
-        "laboratorio": [
-            "Lic. Roberto Vargas (Analista Clínico)"
+            "Dr. Rodolfo Arturo Vargas Yuja (Turno Tarde)"
         ],
         "ecografia": [
             "Dr. Rodolfo Arturo Vargas Yuja (Imagenología y Ecografía)"
