@@ -103,12 +103,8 @@ document.addEventListener("DOMContentLoaded", () => {
             "Dr. Rodolfo Arturo Vargas Yuja (Imagenología y Ecografía)"
         ],
         "enfermeria": [
-            "Lic. en Enfermería (Turno Mañana y Tarde)"
+            "Enfermera Zarela Zelady (Turno Tarde)"
         ],
-        "odontologia": [
-            "Dr. Javier Ortiz (Odontología General)",
-            "Dra. Valeria Castro (Ortodoncia)"
-        ]
     };
 
     if (specialtySelect && doctorSelect) {
