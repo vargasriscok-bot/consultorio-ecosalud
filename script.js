@@ -132,8 +132,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* ==========================================================================
-       4. SISTEMA DE RESERVAS, PERSISTENCIA CON LOCALSTORAGE Y WHATSAPP
+       4. SISTEMA DE RESERVAS, PERSISTENCIA EN LA NUBE (FIREBASE) Y WHATSAPP
        ========================================================================== */
+    const FIREBASE_DB_URL = "https://ecosalud-pacientes-default-rtdb.firebaseio.com";
+
     const bookingForm = document.getElementById("booking-form");
     const appointmentsList = document.getElementById("appointments-list");
     const modal = document.getElementById("confirmation-modal");
@@ -142,11 +144,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let ultimaCita = null;
 
-    // Cargar citas guardadas previamente en el navegador
+    // Cargar citas al iniciar desde LocalStorage y Firebase
     cargarCitas();
 
     if (bookingForm) {
-        bookingForm.addEventListener("submit", (e) => {
+        bookingForm.addEventListener("submit", async (e) => {
             e.preventDefault();
 
             const nombre = document.getElementById("patient-name").value.trim();
@@ -176,9 +178,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 fechaRegistro: new Date().toLocaleDateString("es-BO")
             };
 
-            // Guardar en almacenamiento local
+            // 1. Guardar en almacenamiento local para respuesta visual instantánea
             guardarCitaEnStorage(nuevoTurno);
-            cargarCitas();
+            renderizarCitasEnPantalla();
 
             ultimaCita = nuevoTurno;
             mostrarModalResumen(nuevoTurno);
@@ -188,17 +190,61 @@ document.addEventListener("DOMContentLoaded", () => {
             doctorSelect.disabled = true;
             doctorSelect.innerHTML = '<option value="">-- Elige primero una especialidad --</option>';
 
-            mostrarNotificacion("Turno registrado correctamente en el sistema local.");
+            mostrarNotificacion("Turno registrado localmente. Sincronizando con la nube...");
+
+            // 2. Guardar en la base de datos de Firebase para que aparezca en computadoras y celulares
+            try {
+                const res = await fetch(`${FIREBASE_DB_URL}/turnos.json`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(nuevoTurno)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    nuevoTurno.firebaseKey = data.name;
+                    guardarCitaEnStorage(nuevoTurno);
+                    renderizarCitasEnPantalla();
+                    mostrarNotificacion("¡Turno sincronizado con la nube exitosamente!");
+                } else if (res.status === 401) {
+                    mostrarNotificacion("Turno guardado localmente (Recuerda habilitar las Reglas en Firebase).");
+                }
+            } catch (err) {
+                console.warn("Modo offline: turno guardado en este dispositivo:", err);
+            }
         });
     }
 
     function guardarCitaEnStorage(cita) {
-        const citas = JSON.parse(localStorage.getItem("ecosalud_turnos")) || [];
+        let citas = JSON.parse(localStorage.getItem("ecosalud_turnos")) || [];
+        citas = citas.filter(c => c.id !== cita.id);
         citas.unshift(cita);
         localStorage.setItem("ecosalud_turnos", JSON.stringify(citas));
     }
 
-    function cargarCitas() {
+    async function cargarCitas() {
+        // Primero renderiza datos locales para inmediatez
+        renderizarCitasEnPantalla();
+
+        // Consulta Firebase para sincronizar entre todos los dispositivos
+        try {
+            const res = await fetch(`${FIREBASE_DB_URL}/turnos.json`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data) {
+                    const citasNube = Object.entries(data).map(([key, val]) => ({
+                        ...val,
+                        firebaseKey: key
+                    })).reverse();
+                    localStorage.setItem("ecosalud_turnos", JSON.stringify(citasNube));
+                    renderizarCitasEnPantalla();
+                }
+            }
+        } catch (err) {
+            console.warn("Cargando citas locales (Firebase no disponible):", err);
+        }
+    }
+
+    function renderizarCitasEnPantalla() {
         if (!appointmentsList) return;
 
         const citas = JSON.parse(localStorage.getItem("ecosalud_turnos")) || [];
@@ -218,10 +264,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const ticket = document.createElement("div");
             ticket.className = "appointment-ticket";
             ticket.innerHTML = `
-                <button class="btn-cancel-ticket" title="Cancelar este turno" onclick="eliminarCita(${cita.id})">✕</button>
+                <button class="btn-cancel-ticket" title="Cancelar este turno" onclick="eliminarCita(${cita.id}, '${cita.firebaseKey || ''}')">✕</button>
                 <div class="ticket-header">
                     <span class="ticket-patient">${cita.nombre}</span>
-                    <span class="ticket-status">Registrado</span>
+                    <span class="ticket-status">${cita.firebaseKey ? "En la Nube" : "Registrado"}</span>
                 </div>
                 <div class="ticket-body">
                     <strong>Especialidad:</strong> ${cita.especialidad}<br>
@@ -235,12 +281,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Función accesible de manera global para cancelar turno
-    window.eliminarCita = function(id) {
+    window.eliminarCita = async function(id, firebaseKey) {
         let citas = JSON.parse(localStorage.getItem("ecosalud_turnos")) || [];
         citas = citas.filter(c => c.id !== id);
         localStorage.setItem("ecosalud_turnos", JSON.stringify(citas));
-        cargarCitas();
+        renderizarCitasEnPantalla();
         mostrarNotificacion("El turno seleccionado fue cancelado.");
+
+        // Eliminar también de Firebase si existe en la nube
+        if (firebaseKey) {
+            try {
+                await fetch(`${FIREBASE_DB_URL}/turnos/${firebaseKey}.json`, { method: "DELETE" });
+            } catch (err) {
+                console.warn("Error eliminando cita en Firebase:", err);
+            }
+        }
     };
 
     function mostrarModalResumen(cita) {
@@ -396,7 +451,8 @@ Deseo confirmar el siguiente turno médico registrado:
     // Función para generar la tarjeta con el diseño idéntico a las existentes
     function crearTarjetaTestimonio(comentario) {
         const card = document.createElement("div");
-        card.className = "testimonial-card";
+        card.className = "testimonial-card user-comment-card";
+        card.setAttribute("data-comment-id", comentario.id || comentario.firebaseKey || "");
         const estrellas = "★".repeat(comentario.rating) + "☆".repeat(5 - comentario.rating);
 
         card.innerHTML = `
@@ -411,13 +467,40 @@ Deseo confirmar el siguiente turno médico registrado:
     }
 
     function guardarComentarioEnStorage(comentario) {
-        const comentarios = JSON.parse(localStorage.getItem("ecosalud_opiniones")) || [];
+        let comentarios = JSON.parse(localStorage.getItem("ecosalud_opiniones")) || [];
+        comentarios = comentarios.filter(c => c.id !== comentario.id);
         comentarios.push(comentario);
         localStorage.setItem("ecosalud_opiniones", JSON.stringify(comentarios));
     }
 
-    function cargarComentariosGuardados() {
+    async function cargarComentariosGuardados() {
         if (!testimonialsGrid) return;
+        renderizarComentariosEnGrid();
+
+        // Sincronizar opiniones desde Firebase
+        try {
+            const res = await fetch(`${FIREBASE_DB_URL}/opiniones.json`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data) {
+                    const opinionesNube = Object.entries(data).map(([key, val]) => ({
+                        ...val,
+                        firebaseKey: key
+                    }));
+                    localStorage.setItem("ecosalud_opiniones", JSON.stringify(opinionesNube));
+                    renderizarComentariosEnGrid();
+                }
+            }
+        } catch (err) {
+            console.warn("Cargando opiniones locales (Firebase no disponible):", err);
+        }
+    }
+
+    function renderizarComentariosEnGrid() {
+        if (!testimonialsGrid) return;
+        // Limpiar tarjetas de usuario anteriores para evitar duplicados en la sincronización
+        testimonialsGrid.querySelectorAll(".user-comment-card").forEach(el => el.remove());
+
         const comentarios = JSON.parse(localStorage.getItem("ecosalud_opiniones")) || [];
         comentarios.forEach(comentario => {
             const card = crearTarjetaTestimonio(comentario);
@@ -425,11 +508,11 @@ Deseo confirmar el siguiente turno médico registrado:
         });
     }
 
-    // Cargar comentarios persistidos al iniciar la página
+    // Cargar comentarios al iniciar la página
     cargarComentariosGuardados();
 
     if (commentForm && testimonialsGrid) {
-        commentForm.addEventListener("submit", (e) => {
+        commentForm.addEventListener("submit", async (e) => {
             e.preventDefault();
 
             const nombre = document.getElementById("comment-name").value.trim();
@@ -451,24 +534,43 @@ Deseo confirmar el siguiente turno médico registrado:
                 fecha: new Date().toLocaleDateString("es-BO")
             };
 
-            // Guardar en LocalStorage para persistencia
+            // 1. Guardar en almacenamiento local inmediatamente
             guardarComentarioEnStorage(nuevoComentario);
-
-            // Agregar la nueva tarjeta al contenedor
-            const tarjeta = crearTarjetaTestimonio(nuevoComentario);
-            testimonialsGrid.appendChild(tarjeta);
+            renderizarComentariosEnGrid();
 
             // Reiniciar formulario
             commentForm.reset();
             ratingInput.value = "5";
             actualizarEstrellas(5);
 
-            mostrarNotificacion("¡Gracias por tu opinión! Tu comentario se ha publicado con éxito.");
+            mostrarNotificacion("¡Gracias por tu opinión! Sincronizando...");
 
-            // Desplazamiento suave para ver el comentario publicado
-            tarjeta.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            // 2. Guardar en Firebase para que se refleje en celulares y computadoras
+            try {
+                const res = await fetch(`${FIREBASE_DB_URL}/opiniones.json`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(nuevoComentario)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    nuevoComentario.firebaseKey = data.name;
+                    guardarComentarioEnStorage(nuevoComentario);
+                    mostrarNotificacion("¡Comentario publicado y sincronizado en todos los dispositivos!");
+                } else if (res.status === 401) {
+                    mostrarNotificacion("Comentario guardado localmente (Habilita las reglas en Firebase).");
+                }
+            } catch (err) {
+                console.warn("Modo offline: comentario guardado localmente:", err);
+            }
         });
     }
+
+    // Sincronización automática periódica en segundo plano (cada 8 segundos)
+    setInterval(() => {
+        cargarCitas();
+        cargarComentariosGuardados();
+    }, 8000);
 
 
     /* ==========================================================================
