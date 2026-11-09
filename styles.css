@@ -1014,7 +1014,7 @@ img {
 
 .testimonials-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
     gap: 24px;
 }
 
@@ -1024,11 +1024,32 @@ img {
     border-radius: var(--radius-sm);
     padding: 24px;
     box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: var(--transition);
+    animation: fadeInCard 0.35s ease-out;
+}
+
+.testimonial-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: var(--shadow-card);
+}
+
+@keyframes fadeInCard {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .testimonial-stars {
     color: #e67e22;
-    font-size: 14px;
+    font-size: 15px;
     letter-spacing: 2px;
     margin-bottom: 12px;
 }
@@ -1051,6 +1072,82 @@ img {
 .patient-info span {
     font-size: 11.5px;
     color: var(--color-caption);
+}
+
+/* Formulario para compartir opinión y calificar */
+.review-form-wrapper {
+    margin-top: 50px;
+    background: var(--bg-main);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 32px;
+    max-width: 740px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: var(--shadow-soft);
+}
+
+.review-form-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.review-form-header h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-heading);
+    margin-bottom: 6px;
+}
+
+.review-form-header p {
+    font-size: 13.5px;
+    color: var(--color-caption);
+}
+
+.star-rating-container {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 4px 0;
+}
+
+.star-rating-widget {
+    display: inline-flex;
+    gap: 6px;
+    font-size: 30px;
+    cursor: pointer;
+    user-select: none;
+    line-height: 1;
+}
+
+.star-btn {
+    color: #d1d5db;
+    transition: color 0.15s ease, transform 0.15s ease;
+    cursor: pointer;
+}
+
+.star-btn.active,
+.star-btn.hovered {
+    color: #e67e22;
+}
+
+.star-btn:hover {
+    transform: scale(1.18);
+}
+
+.rating-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-navy-muted);
+}
+
+.review-form-actions {
+    margin-top: 8px;
+}
+
+.review-form-actions .btn {
+    min-width: 200px;
 }
 
 /* 14. PREGUNTAS FRECUENTES (FAQ ACORDEÓN) */

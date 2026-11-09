@@ -336,7 +336,150 @@ Deseo confirmar el siguiente turno médico registrado:
 
 
     /* ==========================================================================
-       6. NOTIFICACIONES TOAST DISCRETAS
+       6. SISTEMA DE COMENTARIOS Y CALIFICACIÓN DE ESTRELLAS
+       ========================================================================== */
+    const starWidget = document.getElementById("star-rating-widget");
+    const ratingInput = document.getElementById("comment-rating");
+    const ratingLabel = document.getElementById("rating-label");
+    const commentForm = document.getElementById("comment-form");
+    const testimonialsGrid = document.getElementById("testimonials-grid");
+
+    const textosRating = {
+        1: "1 de 5 estrellas (Deficiente)",
+        2: "2 de 5 estrellas (Regular)",
+        3: "3 de 5 estrellas (Bueno)",
+        4: "4 de 5 estrellas (Muy bueno)",
+        5: "5 de 5 estrellas (Excelente)"
+    };
+
+    let actualizarEstrellas = function(valor) {};
+
+    if (starWidget && ratingInput) {
+        const starBtns = starWidget.querySelectorAll(".star-btn");
+
+        actualizarEstrellas = function(valor) {
+            starBtns.forEach(btn => {
+                const btnVal = parseInt(btn.getAttribute("data-value"), 10);
+                if (btnVal <= valor) {
+                    btn.classList.add("active");
+                } else {
+                    btn.classList.remove("active");
+                }
+            });
+            if (ratingLabel && textosRating[valor]) {
+                ratingLabel.textContent = textosRating[valor];
+            }
+        };
+
+        // Inicializar en 5 estrellas por defecto
+        actualizarEstrellas(5);
+
+        starBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const valor = parseInt(btn.getAttribute("data-value"), 10);
+                ratingInput.value = valor;
+                actualizarEstrellas(valor);
+            });
+
+            btn.addEventListener("mouseenter", () => {
+                const valor = parseInt(btn.getAttribute("data-value"), 10);
+                starBtns.forEach(b => {
+                    const bVal = parseInt(b.getAttribute("data-value"), 10);
+                    if (bVal <= valor) {
+                        b.classList.add("hovered");
+                    } else {
+                        b.classList.remove("hovered");
+                    }
+                });
+            });
+        });
+
+        starWidget.addEventListener("mouseleave", () => {
+            starBtns.forEach(b => b.classList.remove("hovered"));
+            actualizarEstrellas(parseInt(ratingInput.value, 10));
+        });
+    }
+
+    // Función para generar la tarjeta con el diseño idéntico a las existentes
+    function crearTarjetaTestimonio(comentario) {
+        const card = document.createElement("div");
+        card.className = "testimonial-card";
+        const estrellas = "★".repeat(comentario.rating) + "☆".repeat(5 - comentario.rating);
+
+        card.innerHTML = `
+            <div class="testimonial-stars">${estrellas}</div>
+            <blockquote>"${comentario.texto}"</blockquote>
+            <div class="patient-info">
+                <strong>${comentario.nombre}</strong>
+                <span>Paciente de ${comentario.servicio}</span>
+            </div>
+        `;
+        return card;
+    }
+
+    function guardarComentarioEnStorage(comentario) {
+        const comentarios = JSON.parse(localStorage.getItem("ecosalud_opiniones")) || [];
+        comentarios.push(comentario);
+        localStorage.setItem("ecosalud_opiniones", JSON.stringify(comentarios));
+    }
+
+    function cargarComentariosGuardados() {
+        if (!testimonialsGrid) return;
+        const comentarios = JSON.parse(localStorage.getItem("ecosalud_opiniones")) || [];
+        comentarios.forEach(comentario => {
+            const card = crearTarjetaTestimonio(comentario);
+            testimonialsGrid.appendChild(card);
+        });
+    }
+
+    // Cargar comentarios persistidos al iniciar la página
+    cargarComentariosGuardados();
+
+    if (commentForm && testimonialsGrid) {
+        commentForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const nombre = document.getElementById("comment-name").value.trim();
+            const servicio = document.getElementById("comment-service").value;
+            const rating = parseInt(document.getElementById("comment-rating").value, 10) || 5;
+            const texto = document.getElementById("comment-text").value.trim();
+
+            if (!nombre || !servicio || !texto) {
+                mostrarNotificacion("Por favor completa todos los campos del comentario.");
+                return;
+            }
+
+            const nuevoComentario = {
+                id: Date.now(),
+                nombre,
+                servicio,
+                rating,
+                texto,
+                fecha: new Date().toLocaleDateString("es-BO")
+            };
+
+            // Guardar en LocalStorage para persistencia
+            guardarComentarioEnStorage(nuevoComentario);
+
+            // Agregar la nueva tarjeta al contenedor
+            const tarjeta = crearTarjetaTestimonio(nuevoComentario);
+            testimonialsGrid.appendChild(tarjeta);
+
+            // Reiniciar formulario
+            commentForm.reset();
+            ratingInput.value = "5";
+            actualizarEstrellas(5);
+
+            mostrarNotificacion("¡Gracias por tu opinión! Tu comentario se ha publicado con éxito.");
+
+            // Desplazamiento suave para ver el comentario publicado
+            tarjeta.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        });
+    }
+
+
+    /* ==========================================================================
+       7. NOTIFICACIONES TOAST DISCRETAS
        ========================================================================== */
     function mostrarNotificacion(mensaje) {
         let toast = document.getElementById("toast-notice");

@@ -450,7 +450,7 @@
                 <p class="section-desc">Testimonios de usuarios que asisten a nuestras consultas y estudios.</p>
             </div>
 
-            <div class="testimonials-grid">
+            <div class="testimonials-grid" id="testimonials-grid">
                 
                 <div class="testimonial-card">
                     <div class="testimonial-stars">★★★★★</div>
@@ -485,6 +485,58 @@
                     </div>
                 </div>
 
+            </div>
+
+            <!-- Formulario para dejar comentario y calificación de estrellas -->
+            <div class="review-form-wrapper">
+                <div class="review-form-header">
+                    <h3>¿Te atendiste en nuestro consultorio? Comparte tu experiencia</h3>
+                    <p>Déjanos tu valoración y comentario para que otros pacientes conozcan nuestro servicio.</p>
+                </div>
+                <form id="comment-form" class="review-form">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="comment-name">Nombre y Apellido *</label>
+                            <input type="text" id="comment-name" placeholder="Ej. Mariana Flores" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="comment-service">Servicio Recibido *</label>
+                            <select id="comment-service" required>
+                                <option value="">-- Selecciona el servicio --</option>
+                                <option value="Medicina General">Medicina General</option>
+                                <option value="Ecografía Integral">Ecografía Integral</option>
+                                <option value="Enfermería">Enfermería</option>
+                                <option value="Atención en Recepción">Atención en Recepción</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Tu Calificación *</label>
+                        <div class="star-rating-container">
+                            <div class="star-rating-widget" id="star-rating-widget" aria-label="Calificación de 1 a 5 estrellas">
+                                <span class="star-btn" data-value="1">★</span>
+                                <span class="star-btn" data-value="2">★</span>
+                                <span class="star-btn" data-value="3">★</span>
+                                <span class="star-btn" data-value="4">★</span>
+                                <span class="star-btn" data-value="5">★</span>
+                            </div>
+                            <span class="rating-label" id="rating-label">5 de 5 estrellas (Excelente)</span>
+                        </div>
+                        <input type="hidden" id="comment-rating" value="5">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="comment-text">Tu Comentario *</label>
+                        <textarea id="comment-text" rows="3" placeholder="Escribe tu opinión sobre la atención, puntualidad o trato recibido..." required></textarea>
+                    </div>
+
+                    <div class="review-form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            Publicar Comentario
+                        </button>
+                    </div>
+                </form>
             </div>
 
         </div>
