@@ -1282,9 +1282,42 @@ footer {
 
 .footer-grid {
     display: grid;
-    grid-template-columns: 1.6fr 1fr 1fr;
-    gap: 40px;
+    grid-template-columns: 1.4fr 1fr 1fr 0.9fr;
+    gap: 32px;
     margin-bottom: 35px;
+}
+
+.footer-qr-card {
+    background: #ffffff;
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 130px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: var(--transition);
+}
+
+.footer-qr-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.footer-qr-img {
+    width: 105px;
+    height: 105px;
+    display: block;
+    border-radius: 4px;
+}
+
+.footer-qr-caption {
+    font-size: 10.5px;
+    color: var(--color-navy);
+    font-weight: 600;
+    margin-top: 6px;
+    line-height: 1.25;
 }
 
 .footer-col h4 {
